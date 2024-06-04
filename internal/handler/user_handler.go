@@ -4,7 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/form"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/service"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/utils"
 )
 
 type UserHandler struct {
@@ -12,16 +15,15 @@ type UserHandler struct {
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	var user struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
+	var form form.RegistrationForm
+	if err := c.ShouldBind(&form); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			formattedErrors := utils.FormatValidationError(validationErrors)
+			c.JSON(http.StatusBadRequest, gin.H{"errors": formattedErrors})
+			return
+		}
 	}
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if err := h.UserService.RegisterUser(user.Username, user.Email, user.Password); err != nil {
+	if err := h.UserService.RegisterUser(form.Username, form.Email, form.Password, form.FirstName, form.LastName); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
