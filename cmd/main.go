@@ -26,6 +26,7 @@ func main() {
 
 	r := gin.Default()
 	r.POST("/register", userHandler.Register)
+	r.POST("/login", userHandler.Login)
 
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal(err)

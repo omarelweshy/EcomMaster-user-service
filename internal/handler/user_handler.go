@@ -40,3 +40,28 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "registeration successful"})
 }
+
+func (h *UserHandler) Login(c *gin.Context) {
+	var form form.LoginForm
+
+	if err := c.ShouldBind(&form); err != nil {
+		if validationErrors, ok := err.(validator.ValidationErrors); ok {
+			formattedErrors := utils.FormatValidationError(validationErrors)
+			c.JSON(http.StatusBadRequest, gin.H{"errors": formattedErrors})
+			return
+		}
+	}
+	user, err := h.UserService.LoginUser(form.Username, form.Password)
+	if err != nil {
+		switch err {
+		case service.ErrInvalidCredentials:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+		default:
+			validationErrors := utils.FormatValidationError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"errors": validationErrors})
+
+		}
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "login successful", "user": user})
+}

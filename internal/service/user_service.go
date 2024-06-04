@@ -15,8 +15,9 @@ type UserService struct {
 }
 
 var (
-	ErrUsernameTaken   = errors.New("username already taken")
-	ErrEmailRegistered = errors.New("email already registered")
+	ErrUsernameTaken      = errors.New("username already taken")
+	ErrEmailRegistered    = errors.New("email already registered")
+	ErrInvalidCredentials = errors.New("invalid credentials")
 )
 
 func (s *UserService) RegisterUser(username, email, password, firstName, lastName string) error {
@@ -45,6 +46,17 @@ func (s *UserService) RegisterUser(username, email, password, firstName, lastNam
 	return s.Repo.CreateUser(&user)
 }
 
-// func (s *UserService) Login(username, password string) (bool, error) {
-// 	// user, err := s.Re
-// }
+func (s *UserService) LoginUser(username, password string) (*model.User, error) {
+	user, err := s.Repo.GetUserByUsername(username)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	if user.PasswordHash != hashedPassword {
+		return nil, ErrInvalidCredentials
+	}
+	return user, nil
+}
