@@ -1,12 +1,11 @@
 package service
 
 import (
-	"crypto/sha256"
 	"errors"
-	"fmt"
 
 	"github.com/omarelweshy/EcomMaster-user-service/internal/model"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -35,13 +34,16 @@ func (s *UserService) RegisterUser(username, email, password, firstName, lastNam
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err
 	}
-	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
 	user := model.User{
 		FirstName:    firstName,
 		LastName:     lastName,
 		Username:     username,
 		Email:        email,
-		PasswordHash: hashedPassword,
+		PasswordHash: string(hashedPassword),
 	}
 	return s.Repo.CreateUser(&user)
 }
@@ -54,8 +56,8 @@ func (s *UserService) LoginUser(username, password string) (*model.User, error) 
 		}
 		return nil, err
 	}
-	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
-	if user.PasswordHash != hashedPassword {
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
 		return nil, ErrInvalidCredentials
 	}
 	return user, nil
