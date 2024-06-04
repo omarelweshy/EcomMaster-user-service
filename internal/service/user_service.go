@@ -2,17 +2,38 @@ package service
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 
 	"github.com/omarelweshy/EcomMaster-user-service/internal/model"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/repository"
 	"gorm.io/gorm"
 )
 
 type UserService struct {
-	DB *gorm.DB
+	Repo repository.UserRepository
 }
 
+var (
+	ErrUsernameTaken   = errors.New("username already taken")
+	ErrEmailRegistered = errors.New("email already registered")
+)
+
 func (s *UserService) RegisterUser(username, email, password, firstName, lastName string) error {
+	_, err := s.Repo.GetUserByUsername(username)
+	if err == nil {
+		return ErrUsernameTaken
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	_, err = s.Repo.GetUserByEmail(email)
+	if err == nil {
+		return ErrEmailRegistered
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
 	hashedPassword := fmt.Sprintf("%x", sha256.Sum256([]byte(password)))
 	user := model.User{
 		FirstName:    firstName,
@@ -21,5 +42,9 @@ func (s *UserService) RegisterUser(username, email, password, firstName, lastNam
 		Email:        email,
 		PasswordHash: hashedPassword,
 	}
-	return s.DB.Create(&user).Error
+	return s.Repo.CreateUser(&user)
 }
+
+// func (s *UserService) Login(username, password string) (bool, error) {
+// 	// user, err := s.Re
+// }

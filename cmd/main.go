@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/handler"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/model"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/repository"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/service"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,7 +20,8 @@ func main() {
 	}
 
 	db.AutoMigrate(&model.User{})
-	userService := &service.UserService{DB: db}
+	userRepository := &repository.UserRepository{DB: db}
+	userService := &service.UserService{Repo: *userRepository}
 	userHandler := &handler.UserHandler{UserService: userService}
 
 	r := gin.Default()

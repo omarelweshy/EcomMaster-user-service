@@ -16,6 +16,7 @@ type UserHandler struct {
 
 func (h *UserHandler) Register(c *gin.Context) {
 	var form form.RegistrationForm
+
 	if err := c.ShouldBind(&form); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			formattedErrors := utils.FormatValidationError(validationErrors)
@@ -23,9 +24,19 @@ func (h *UserHandler) Register(c *gin.Context) {
 			return
 		}
 	}
-	if err := h.UserService.RegisterUser(form.Username, form.Email, form.Password, form.FirstName, form.LastName); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	err := h.UserService.RegisterUser(form.Username, form.Email, form.Password, form.FirstName, form.LastName)
+	if err != nil {
+		switch err {
+		case service.ErrUsernameTaken:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "username already taken"})
+			return
+		case service.ErrEmailRegistered:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "email already registered"})
+			return
+		default:
+			validationErrors := utils.FormatValidationError(err)
+			c.JSON(http.StatusInternalServerError, gin.H{"errors": validationErrors})
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "registeration successful"})
 }
