@@ -33,6 +33,7 @@ func main() {
 	auth.Use(middleware.JWTAuthMiddleware())
 	{
 		auth.GET("/profile", userHandler.Profile)
+		auth.PUT("/profile", userHandler.UpdateProfile)
 	}
 
 	if err := r.Run(":8000"); err != nil {

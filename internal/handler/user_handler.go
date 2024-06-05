@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/form"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/model"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/service"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/utils"
 )
@@ -95,4 +96,38 @@ func (h *UserHandler) Profile(c *gin.Context) {
 		"username":  user.Username,
 		"email":     user.Email,
 	})
+}
+
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		return
+	}
+	usernameStr, ok := username.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username format"})
+		return
+	}
+	var form form.UpdateUserForm
+	if err := c.ShouldBind(&form); err != nil {
+		validationErrors := utils.FormatValidationError(err)
+		c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
+		return
+	}
+
+	updatedUser := model.User{
+		FirstName: form.FirstName,
+		LastName:  form.LastName,
+		Email:     form.Email,
+	}
+
+	err := h.UserService.Repo.UpdateUser(usernameStr, &updatedUser)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update user profile"})
+		return
+
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
 }
