@@ -71,3 +71,28 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "login successful", "token": token})
 }
+
+func (h *UserHandler) Profile(c *gin.Context) {
+	username, exists := c.Get("username")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		return
+	}
+	usernameStr, ok := username.(string)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username format"})
+		return
+	}
+
+	user, err := h.UserService.Repo.GetUserByUsername(usernameStr)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"firstName": user.FirstName,
+		"lastName":  user.LastName,
+		"username":  user.Username,
+		"email":     user.Email,
+	})
+}

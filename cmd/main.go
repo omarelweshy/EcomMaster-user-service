@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/handler"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/middleware"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/model"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/repository"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/service"
@@ -27,6 +28,12 @@ func main() {
 	r := gin.Default()
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
+
+	auth := r.Group("/auth")
+	auth.Use(middleware.JWTAuthMiddleware())
+	{
+		auth.GET("/profile", userHandler.Profile)
+	}
 
 	if err := r.Run(":8000"); err != nil {
 		log.Fatal(err)
