@@ -21,7 +21,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			formattedErrors := utils.FormatValidationError(validationErrors)
-			c.JSON(http.StatusBadRequest, gin.H{"errors": formattedErrors})
+			utils.RespondWithError(c, http.StatusBadRequest, "Validation failed", formattedErrors)
 			return
 		}
 	}
@@ -29,17 +29,17 @@ func (h *UserHandler) Register(c *gin.Context) {
 	if err != nil {
 		switch err {
 		case service.ErrUsernameTaken:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "username already taken"})
+			utils.RespondWithError(c, http.StatusBadRequest, "Username already taken", nil)
 			return
 		case service.ErrEmailRegistered:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "email already registered"})
+			utils.RespondWithError(c, http.StatusBadRequest, "Email already registered", nil)
 			return
 		default:
-			validationErrors := utils.FormatValidationError(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"errors": validationErrors})
+			utils.RespondWithError(c, http.StatusInternalServerError, "Registration failed", nil)
+			return
 		}
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "registeration successful"})
+	utils.RespondWithSuccess(c, "Registration successful", nil)
 }
 
 func (h *UserHandler) Login(c *gin.Context) {
@@ -48,7 +48,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil {
 		if validationErrors, ok := err.(validator.ValidationErrors); ok {
 			formattedErrors := utils.FormatValidationError(validationErrors)
-			c.JSON(http.StatusBadRequest, gin.H{"errors": formattedErrors})
+			utils.RespondWithError(c, http.StatusBadRequest, "Validation failed", formattedErrors)
 			return
 		}
 	}
@@ -56,41 +56,41 @@ func (h *UserHandler) Login(c *gin.Context) {
 	if err != nil {
 		switch err {
 		case service.ErrInvalidCredentials:
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+			utils.RespondWithError(c, http.StatusUnauthorized, "Invalid credentials", nil)
+			return
 		default:
 			validationErrors := utils.FormatValidationError(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"errors": validationErrors})
-
+			utils.RespondWithError(c, http.StatusBadRequest, "Validation failed", validationErrors)
+			return
 		}
-		return
 	}
 
 	token, err := utils.GenerateJWT(user.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		utils.RespondWithError(c, http.StatusInternalServerError, "could not generate token", nil)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"status": "login successful", "token": token})
+	utils.RespondWithSuccess(c, "login successful", gin.H{"token": token})
 }
 
 func (h *UserHandler) Profile(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		utils.RespondWithError(c, http.StatusUnauthorized, "no username found", nil)
 		return
 	}
 	usernameStr, ok := username.(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username format"})
+		utils.RespondWithError(c, http.StatusUnauthorized, "Invalid username format", nil)
 		return
 	}
 
 	user, err := h.UserService.Repo.GetUserByUsername(usernameStr)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		utils.RespondWithError(c, http.StatusUnauthorized, "no username found", nil)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
+	utils.RespondWithSuccess(c, "user data", gin.H{
 		"firstName": user.FirstName,
 		"lastName":  user.LastName,
 		"username":  user.Username,
@@ -101,18 +101,18 @@ func (h *UserHandler) Profile(c *gin.Context) {
 func (h *UserHandler) UpdateProfile(c *gin.Context) {
 	username, exists := c.Get("username")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "no username found"})
+		utils.RespondWithError(c, http.StatusUnauthorized, "no username found", nil)
 		return
 	}
 	usernameStr, ok := username.(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username format"})
+		utils.RespondWithError(c, http.StatusUnauthorized, "Invalid username format", nil)
 		return
 	}
 	var form form.UpdateUserForm
 	if err := c.ShouldBind(&form); err != nil {
 		validationErrors := utils.FormatValidationError(err)
-		c.JSON(http.StatusBadRequest, gin.H{"errors": validationErrors})
+		utils.RespondWithError(c, http.StatusBadRequest, "Validation failed", validationErrors)
 		return
 	}
 
@@ -124,10 +124,8 @@ func (h *UserHandler) UpdateProfile(c *gin.Context) {
 
 	err := h.UserService.Repo.UpdateUser(usernameStr, &updatedUser)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not update user profile"})
+		utils.RespondWithError(c, http.StatusInternalServerError, "could not update user profile", nil)
 		return
-
 	}
-
-	c.JSON(http.StatusOK, gin.H{"message": "Profile updated successfully"})
+	utils.RespondWithSuccess(c, "Profile updated successfully", nil)
 }

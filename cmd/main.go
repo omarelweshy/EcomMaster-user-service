@@ -26,6 +26,8 @@ func main() {
 	userHandler := &handler.UserHandler{UserService: userService}
 
 	r := gin.Default()
+
+	r.Use(middleware.ErrorHandler())
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
 
