@@ -27,7 +27,9 @@ func SetupRouter() *gin.Engine {
 
 	r := gin.Default()
 
+	r.Use(middleware.Logging())
 	r.Use(middleware.ErrorHandler())
+
 	r.POST("/register", userHandler.Register)
 	r.POST("/login", userHandler.Login)
 
