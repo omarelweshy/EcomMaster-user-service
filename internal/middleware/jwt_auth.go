@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/omarelweshy/EcomMaster-user-service/internal/utils"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/util"
 )
 
 func JWTAuthMiddleware() gin.HandlerFunc {
@@ -17,7 +17,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := utils.ValidateJWT(tokenString)
+		claims, err := util.ValidateJWT(tokenString)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()

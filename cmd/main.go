@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/omarelweshy/EcomMaster-user-service/internal/logger"
-	"github.com/omarelweshy/EcomMaster-user-service/internal/router"
+	"github.com/omarelweshy/EcomMaster-user-service/pkg/router"
 )
 
 func main() {

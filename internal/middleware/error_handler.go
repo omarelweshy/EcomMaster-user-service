@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/omarelweshy/EcomMaster-user-service/internal/utils"
+	"github.com/omarelweshy/EcomMaster-user-service/internal/util"
 )
 
 func ErrorHandler() gin.HandlerFunc {
@@ -13,7 +13,7 @@ func ErrorHandler() gin.HandlerFunc {
 
 		if len(c.Errors) > 0 {
 			err := c.Errors.Last().Err
-			utils.RespondWithError(c, http.StatusInternalServerError, err.Error(), nil)
+			util.RespondWithError(c, http.StatusInternalServerError, err.Error(), nil)
 			return
 		}
 	}
