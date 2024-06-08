@@ -1,0 +1,10 @@
+myapp
+
+bin/
+build/
+
+*.DS_Store
+
+go/pkg/
+go/bin/
+
