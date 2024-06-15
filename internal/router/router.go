@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/omarelweshy/EcomMaster-user-service/docs"
 	"github.com/omarelweshy/EcomMaster-user-service/internal/handler"
@@ -18,7 +19,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	userHandler := &handler.UserHandler{UserService: userService}
 
 	r := gin.Default()
-
+	r.Use(cors.Default())
+	r.Use(middleware.CORSMiddleware())
 	r.Use(middleware.Logging())
 	r.Use(middleware.ErrorHandler())
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
